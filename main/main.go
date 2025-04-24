@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 
 	gracefulshutdown "github.com/minhtri06/go-graceful-shutdown"
 )
@@ -22,7 +24,9 @@ func main() {
 		Handler: routes(),
 	}
 
-	if err := gracefulshutdown.ListenAndServe(httpServer, context.Background()); err != nil {
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt)
+	if err := gracefulshutdown.ListenAndServe(httpServer, shutdown, context.Background()); err != nil {
 		fmt.Println("error")
 	}
 }
