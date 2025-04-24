@@ -10,6 +10,9 @@ type HTTPServer interface {
 	Shutdown(context.Context) error
 }
 
-func ListenAndServe(server HTTPServer, shutdownSignal chan os.Signal, shutdownCtx context.Context) error {
+func ListenAndServe(server HTTPServer, shutdownChan chan os.Signal, shutdownCtx context.Context) error {
+	server.ListenAndServe()
+	<-shutdownChan
+	server.Shutdown(shutdownCtx)
 	return nil
 }
