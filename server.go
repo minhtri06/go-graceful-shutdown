@@ -11,7 +11,9 @@ type HTTPServer interface {
 }
 
 func ListenAndServe(server HTTPServer, shutdownChan chan os.Signal, shutdownCtx context.Context) error {
-	server.ListenAndServe()
+	if err := server.ListenAndServe(); err != nil {
+		return err
+	}
 	<-shutdownChan
 	server.Shutdown(shutdownCtx)
 	return nil

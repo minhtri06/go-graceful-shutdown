@@ -2,6 +2,7 @@ package gracefulshutdown_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -78,4 +79,20 @@ func TestListenAndServe(t *testing.T) {
 		})
 	})
 
+	t.Run("should return error if ListenAndServe returns error", func(t *testing.T) {
+		listenErr := errors.New("error when listening")
+		svr := &MockServer{
+			listenFunc:   func() error { return listenErr },
+			shutdownFunc: func(context.Context) error { return nil },
+		}
+
+		var err error
+		shutdown := make(chan os.Signal, 1)
+		go func() {
+			err = gracefulshutdown.ListenAndServe(svr, shutdown, context.Background())
+		}()
+		time.Sleep(100 * time.Millisecond)
+		assertion.Error(t, err, listenErr)
+		shutdown <- os.Interrupt
+	})
 }
