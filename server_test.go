@@ -8,7 +8,7 @@ import (
 	"time"
 
 	gracefulshutdown "github.com/minhtri06/go-graceful-shutdown"
-	"github.com/minhtri06/go-graceful-shutdown/assertion"
+	"github.com/minhtri06/go-graceful-shutdown/assert"
 )
 
 type MockServer struct {
@@ -47,9 +47,9 @@ func TestListenAndServe(t *testing.T) {
 			}()
 
 			err := gracefulshutdown.ListenAndServe(svr, shutdown, context.Background())
-			assertion.NoError(t, err)
-			assertion.Equal(t, listenCalls, 1)
-			assertion.Equal(t, shutdownCalls, 1)
+			assert.NoError(t, err)
+			assert.Equal(t, listenCalls, 1)
+			assert.Equal(t, shutdownCalls, 1)
 		})
 
 		t.Run("if not shutdown, should call ListenAndServe once and not call Shutdown", func(t *testing.T) {
@@ -70,12 +70,12 @@ func TestListenAndServe(t *testing.T) {
 				gracefulshutdown.ListenAndServe(svr, shutdown, context.Background())
 			}()
 			time.Sleep(50 * time.Millisecond)
-			assertion.Equal(t, listenCalls, 1)
-			assertion.Equal(t, shutdownCalls, 0)
+			assert.Equal(t, listenCalls, 1)
+			assert.Equal(t, shutdownCalls, 0)
 			shutdown <- os.Interrupt
 			time.Sleep(50 * time.Millisecond)
-			assertion.Equal(t, listenCalls, 1)
-			assertion.Equal(t, shutdownCalls, 1)
+			assert.Equal(t, listenCalls, 1)
+			assert.Equal(t, shutdownCalls, 1)
 		})
 	})
 
@@ -92,7 +92,7 @@ func TestListenAndServe(t *testing.T) {
 			err = gracefulshutdown.ListenAndServe(svr, shutdown, context.Background())
 		}()
 		time.Sleep(100 * time.Millisecond)
-		assertion.Error(t, err, listenErr)
+		assert.Error(t, err, listenErr)
 		shutdown <- os.Interrupt
 	})
 }
