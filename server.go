@@ -21,7 +21,9 @@ func ListenAndServe(server HTTPServer, shutdownChan chan os.Signal, shutdownCtx 
 	case err := <-listenErr:
 		return err
 	case <-shutdownChan:
-		server.Shutdown(shutdownCtx)
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			return err
+		}
 	}
 	return nil
 }

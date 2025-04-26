@@ -118,4 +118,19 @@ func TestListenAndServe(t *testing.T) {
 		assert.Error(t, err, listenErr)
 		shutdown <- os.Interrupt
 	})
+
+	t.Run("when shutting down, should return an error if Shutdown returns an error", func(t *testing.T) {
+		shutdownErr := errors.New("error shutting down")
+		svr := &MockServer{
+			listenFunc: func() error {
+				time.Sleep(100 * time.Millisecond)
+				return nil
+			},
+			shutdownFunc: func(context.Context) error { return shutdownErr },
+		}
+		shutdown := make(chan os.Signal, 1)
+		shutdown <- os.Interrupt
+		err := gracefulshutdown.ListenAndServe(svr, shutdown, context.Background())
+		assert.Error(t, err, shutdownErr)
+	})
 }
