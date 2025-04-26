@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"syscall"
 	"testing"
 	"time"
 
@@ -132,5 +133,80 @@ func TestListenAndServe(t *testing.T) {
 		shutdown <- os.Interrupt
 		err := gracefulshutdown.ListenAndServe(svr, shutdown, context.Background())
 		assert.Error(t, err, shutdownErr)
+	})
+
+	t.Run("should only shutdown when the signal is os.Interrupt, os.Kill, syscall.SIGINT or syscall.SIGKILL", func(t *testing.T) {
+		cases := []struct {
+			signal        os.Signal
+			shutdownCalls int
+		}{
+			{syscall.SIGINT, 1},
+			{syscall.SIGKILL, 1},
+			{os.Interrupt, 1},
+			{os.Kill, 1},
+			{syscall.SIGABRT, 0},
+			{syscall.SIGINFO, 0},
+			{syscall.SIGILL, 0},
+			{syscall.SIGIOT, 0},
+		}
+
+		for _, c := range cases {
+			t.Run(c.signal.String(), func(t *testing.T) {
+				shutdownCalls := 0
+				server := &MockServer{
+					listenFunc: func() error { return nil },
+					shutdownFunc: func(ctx context.Context) error {
+						shutdownCalls++
+						return nil
+					},
+				}
+
+				shutdown := make(chan os.Signal, 1)
+				go func() { gracefulshutdown.ListenAndServe(server, shutdown, context.Background()) }()
+
+				shutdown <- c.signal
+				time.Sleep(20 * time.Millisecond)
+				assert.Equal(t, shutdownCalls, c.shutdownCalls)
+
+				shutdown <- syscall.SIGINT
+			})
+		}
+	})
+
+	t.Run("after send a wrong signal, if we send a actual shutdown signal, it should shutdown", func(t *testing.T) {
+		cases := []struct {
+			wrongSignalCount int
+			shutdownSignal   os.Signal
+		}{
+			{4, os.Interrupt},
+			{6, os.Kill},
+			{7, syscall.SIGINT},
+			{1, syscall.SIGKILL},
+		}
+		for _, c := range cases {
+			t.Run(c.shutdownSignal.String(), func(t *testing.T) {
+				shutdownCalls := 0
+				server := &MockServer{
+					listenFunc: func() error { return nil },
+					shutdownFunc: func(ctx context.Context) error {
+						shutdownCalls++
+						return nil
+					},
+				}
+				shutdown := make(chan os.Signal, 1)
+				go func() { gracefulshutdown.ListenAndServe(server, shutdown, context.Background()) }()
+
+				wrongSignal := syscall.SIGIOT
+				for range c.wrongSignalCount {
+					shutdown <- wrongSignal
+					time.Sleep(20 * time.Millisecond)
+					assert.Equal(t, shutdownCalls, 0)
+				}
+
+				shutdown <- c.shutdownSignal
+				time.Sleep(20 * time.Millisecond)
+				assert.Equal(t, shutdownCalls, 1)
+			})
+		}
 	})
 }

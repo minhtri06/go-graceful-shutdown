@@ -17,13 +17,17 @@ func ListenAndServe(server HTTPServer, shutdownChan chan os.Signal, shutdownCtx 
 			listenErr <- err
 		}
 	}()
-	select {
-	case err := <-listenErr:
-		return err
-	case <-shutdownChan:
-		if err := server.Shutdown(shutdownCtx); err != nil {
+	for {
+		select {
+		case err := <-listenErr:
 			return err
+		case signal := <-shutdownChan:
+			if signal == os.Interrupt || signal == os.Kill {
+				if err := server.Shutdown(shutdownCtx); err != nil {
+					return err
+				}
+				return nil
+			}
 		}
 	}
-	return nil
 }
