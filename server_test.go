@@ -52,6 +52,29 @@ func TestListenAndServe(t *testing.T) {
 			assert.Equal(t, shutdownCalls, 1)
 		})
 
+		t.Run("should call Shutdown when shutdown", func(t *testing.T) {
+			shutdownCalls := 0
+			svr := &MockServer{
+				listenFunc: func() error {
+					time.Sleep(100 * time.Millisecond)
+					return nil
+				},
+				shutdownFunc: func(context.Context) error {
+					shutdownCalls++
+					return nil
+				},
+			}
+
+			shutdown := make(chan os.Signal, 1)
+			go func() {
+				gracefulshutdown.ListenAndServe(svr, shutdown, context.Background())
+			}()
+
+			shutdown <- os.Interrupt
+			time.Sleep(50 * time.Millisecond)
+			assert.Equal(t, shutdownCalls, 1)
+		})
+
 		t.Run("if not shutdown, should call ListenAndServe once and not call Shutdown", func(t *testing.T) {
 			listenCalls := 0
 			shutdownCalls := 0
