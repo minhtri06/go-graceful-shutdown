@@ -193,6 +193,7 @@ func TestListenAndServe(t *testing.T) {
 						return nil
 					},
 				}
+
 				shutdown := make(chan os.Signal, 1)
 				go func() { gracefulshutdown.ListenAndServe(server, shutdown, context.Background()) }()
 
@@ -208,5 +209,26 @@ func TestListenAndServe(t *testing.T) {
 				assert.Equal(t, shutdownCalls, 1)
 			})
 		}
+	})
+
+	t.Run("should pass the context to the Shutdown function", func(t *testing.T) {
+		var gotCtx context.Context
+		server := &MockServer{
+			listenFunc: func() error { return nil },
+			shutdownFunc: func(ctx context.Context) error {
+				gotCtx = ctx
+				return nil
+			},
+		}
+
+		shutdown := make(chan os.Signal, 1)
+		ctx := context.WithValue(context.Background(), "test_key", 12)
+		go func() { gracefulshutdown.ListenAndServe(server, shutdown, ctx) }()
+
+		shutdown <- os.Interrupt
+		time.Sleep(10 * time.Millisecond)
+
+		gotVal := gotCtx.Value("test_key").(int)
+		assert.Equal(t, gotVal, 12)
 	})
 }
