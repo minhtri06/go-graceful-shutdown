@@ -10,7 +10,7 @@ type HTTPServer interface {
 	Shutdown(context.Context) error
 }
 
-func ListenAndServe(server HTTPServer, shutdownChan chan os.Signal, shutdownCtx context.Context) error {
+func ListenAndServe(server HTTPServer, shutdownCh chan os.Signal, shutdownCtx context.Context) error {
 	listenErr := make(chan error)
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
@@ -21,7 +21,7 @@ func ListenAndServe(server HTTPServer, shutdownChan chan os.Signal, shutdownCtx 
 		select {
 		case err := <-listenErr:
 			return err
-		case signal := <-shutdownChan:
+		case signal := <-shutdownCh:
 			if signal != os.Interrupt && signal != os.Kill {
 				break
 			}

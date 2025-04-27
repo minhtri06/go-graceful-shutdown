@@ -8,35 +8,35 @@ import (
 
 type MockHTTPServer struct {
 	ListenFunc func() error
-	ListenChn  chan struct{}
+	ListenCh   chan struct{}
 
 	ShutdownFunc func(context.Context) error
-	ShutdownChn  chan struct{}
+	ShutdownCh   chan struct{}
 }
 
 func NewMockHTTPServer() *MockHTTPServer {
 	return &MockHTTPServer{
 		ListenFunc:   func() error { return nil },
-		ListenChn:    make(chan struct{}, 1),
+		ListenCh:     make(chan struct{}, 1),
 		ShutdownFunc: func(ctx context.Context) error { return nil },
-		ShutdownChn:  make(chan struct{}, 1),
+		ShutdownCh:   make(chan struct{}, 1),
 	}
 }
 
 func (s *MockHTTPServer) ListenAndServe() error {
-	s.ListenChn <- struct{}{}
+	s.ListenCh <- struct{}{}
 	return s.ListenFunc()
 }
 
 func (s *MockHTTPServer) Shutdown(ctx context.Context) error {
-	s.ShutdownChn <- struct{}{}
+	s.ShutdownCh <- struct{}{}
 	return s.ShutdownFunc(ctx)
 }
 
 func (s *MockHTTPServer) AssertListenCalled(t testing.TB) {
 	t.Helper()
 	select {
-	case <-s.ListenChn:
+	case <-s.ListenCh:
 	case <-time.After(500 * time.Millisecond):
 		t.Errorf("timeout waiting for ListenAndServe to be called")
 	}
@@ -45,7 +45,7 @@ func (s *MockHTTPServer) AssertListenCalled(t testing.TB) {
 func (s *MockHTTPServer) AssertShutdownCalled(t testing.TB) {
 	t.Helper()
 	select {
-	case <-s.ShutdownChn:
+	case <-s.ShutdownCh:
 	case <-time.After(500 * time.Millisecond):
 		t.Errorf("timeout waiting for Shutdown to be called")
 	}
@@ -54,7 +54,7 @@ func (s *MockHTTPServer) AssertShutdownCalled(t testing.TB) {
 func (s *MockHTTPServer) AssertListenNotCalled(t testing.TB) {
 	t.Helper()
 	select {
-	case <-s.ListenChn:
+	case <-s.ListenCh:
 		t.Errorf("expect ListenAndServe not called, but it was called")
 	case <-time.After(5 * time.Millisecond):
 	}
@@ -63,7 +63,7 @@ func (s *MockHTTPServer) AssertListenNotCalled(t testing.TB) {
 func (s *MockHTTPServer) AssertShutdownNotCalled(t testing.TB) {
 	t.Helper()
 	select {
-	case <-s.ShutdownChn:
+	case <-s.ShutdownCh:
 		t.Errorf("expect Shutdown not called, but it was called")
 	case <-time.After(5 * time.Millisecond):
 	}

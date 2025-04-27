@@ -18,12 +18,12 @@ func TestListenAndServe(t *testing.T) {
 			server := graceshut.NewMockHTTPServer()
 
 			shutdown := make(chan os.Signal, 1)
-			errChan := make(chan error)
-			go func() { errChan <- graceshut.ListenAndServe(server, shutdown, context.Background()) }()
+			errCh := make(chan error)
+			go func() { errCh <- graceshut.ListenAndServe(server, shutdown, context.Background()) }()
 
 			shutdown <- os.Interrupt
 			select {
-			case err := <-errChan:
+			case err := <-errCh:
 				assert.NoError(t, err)
 				server.AssertListenCalled(t)
 				server.AssertShutdownCalled(t)
@@ -52,12 +52,12 @@ func TestListenAndServe(t *testing.T) {
 		server := graceshut.NewMockHTTPServer()
 		server.ListenFunc = func() error { return listenErr }
 
-		errChan := make(chan error)
+		errCh := make(chan error)
 		shutdown := make(chan os.Signal, 1)
-		go func() { errChan <- graceshut.ListenAndServe(server, shutdown, context.Background()) }()
+		go func() { errCh <- graceshut.ListenAndServe(server, shutdown, context.Background()) }()
 
 		select {
-		case err := <-errChan:
+		case err := <-errCh:
 			assert.Error(t, err, listenErr)
 			server.AssertListenCalled(t)
 			server.AssertShutdownNotCalled(t)
@@ -72,12 +72,12 @@ func TestListenAndServe(t *testing.T) {
 		server.ShutdownFunc = func(ctx context.Context) error { return shutdownErr }
 
 		shutdown := make(chan os.Signal, 1)
-		errChan := make(chan error)
-		go func() { errChan <- graceshut.ListenAndServe(server, shutdown, context.Background()) }()
+		errCh := make(chan error)
+		go func() { errCh <- graceshut.ListenAndServe(server, shutdown, context.Background()) }()
 
 		shutdown <- os.Interrupt
 		select {
-		case err := <-errChan:
+		case err := <-errCh:
 			assert.Error(t, err, shutdownErr)
 			server.AssertListenCalled(t)
 			server.AssertShutdownCalled(t)
