@@ -42,15 +42,19 @@ func TestListenAndServe(t *testing.T) {
 			}
 
 			shutdown := make(chan os.Signal, 1)
-			go func() {
-				time.Sleep(100 * time.Millisecond)
-				shutdown <- os.Interrupt
-			}()
+			errChan := make(chan error)
+			go func() { errChan <- gracefulshutdown.ListenAndServe(server, shutdown, context.Background()) }()
 
-			err := gracefulshutdown.ListenAndServe(server, shutdown, context.Background())
-			assert.NoError(t, err)
-			assert.Equal(t, listenCalls, 1)
-			assert.Equal(t, shutdownCalls, 1)
+			time.Sleep(10 * time.Millisecond)
+			shutdown <- os.Interrupt
+			select {
+			case err := <-errChan:
+				assert.NoError(t, err)
+				assert.Equal(t, listenCalls, 1)
+				assert.Equal(t, shutdownCalls, 1)
+			case <-time.After(500 * time.Millisecond):
+				t.Errorf("timeout waiting for shutdown")
+			}
 		})
 
 		t.Run("should call Shutdown when shutdown", func(t *testing.T) {
@@ -67,9 +71,7 @@ func TestListenAndServe(t *testing.T) {
 			}
 
 			shutdown := make(chan os.Signal, 1)
-			go func() {
-				gracefulshutdown.ListenAndServe(server, shutdown, context.Background())
-			}()
+			go gracefulshutdown.ListenAndServe(server, shutdown, context.Background())
 
 			shutdown <- os.Interrupt
 			time.Sleep(50 * time.Millisecond)
@@ -89,13 +91,14 @@ func TestListenAndServe(t *testing.T) {
 					return nil
 				},
 			}
+
 			shutdown := make(chan os.Signal)
-			go func() {
-				gracefulshutdown.ListenAndServe(server, shutdown, context.Background())
-			}()
+			go gracefulshutdown.ListenAndServe(server, shutdown, context.Background())
+
 			time.Sleep(50 * time.Millisecond)
 			assert.Equal(t, listenCalls, 1)
 			assert.Equal(t, shutdownCalls, 0)
+
 			shutdown <- os.Interrupt
 			time.Sleep(50 * time.Millisecond)
 			assert.Equal(t, listenCalls, 1)
@@ -103,24 +106,26 @@ func TestListenAndServe(t *testing.T) {
 		})
 	})
 
-	t.Run("should return error if ListenAndServe returns error", func(t *testing.T) {
+	t.Run("if ListenAndServe returns error should propagate it", func(t *testing.T) {
 		listenErr := errors.New("error when listening")
 		server := &MockHTTPServer{
 			listenFunc:   func() error { return listenErr },
 			shutdownFunc: func(context.Context) error { return nil },
 		}
 
-		var err error
+		errChan := make(chan error)
 		shutdown := make(chan os.Signal, 1)
-		go func() {
-			err = gracefulshutdown.ListenAndServe(server, shutdown, context.Background())
-		}()
-		time.Sleep(100 * time.Millisecond)
-		assert.Error(t, err, listenErr)
-		shutdown <- os.Interrupt
+		go func() { errChan <- gracefulshutdown.ListenAndServe(server, shutdown, context.Background()) }()
+
+		select {
+		case err := <-errChan:
+			assert.Error(t, err, listenErr)
+		case <-time.After(500 * time.Millisecond):
+			t.Errorf("timeout waiting for error to be returned")
+		}
 	})
 
-	t.Run("when shutting down, should return an error if Shutdown returns an error", func(t *testing.T) {
+	t.Run("should propagate Shutdown's error", func(t *testing.T) {
 		shutdownErr := errors.New("error shutting down")
 		server := &MockHTTPServer{
 			listenFunc: func() error {
@@ -129,10 +134,18 @@ func TestListenAndServe(t *testing.T) {
 			},
 			shutdownFunc: func(context.Context) error { return shutdownErr },
 		}
+
 		shutdown := make(chan os.Signal, 1)
+		errChan := make(chan error)
+		go func() { errChan <- gracefulshutdown.ListenAndServe(server, shutdown, context.Background()) }()
 		shutdown <- os.Interrupt
-		err := gracefulshutdown.ListenAndServe(server, shutdown, context.Background())
-		assert.Error(t, err, shutdownErr)
+
+		select {
+		case err := <-errChan:
+			assert.Error(t, err, shutdownErr)
+		case <-time.After(500 * time.Millisecond):
+			t.Errorf("timeout waiting for error from Shutdown")
+		}
 	})
 
 	t.Run("should only shutdown when the signal is os.Interrupt, os.Kill, syscall.SIGINT or syscall.SIGKILL", func(t *testing.T) {
@@ -162,7 +175,7 @@ func TestListenAndServe(t *testing.T) {
 				}
 
 				shutdown := make(chan os.Signal, 1)
-				go func() { gracefulshutdown.ListenAndServe(server, shutdown, context.Background()) }()
+				go gracefulshutdown.ListenAndServe(server, shutdown, context.Background())
 
 				shutdown <- c.signal
 				time.Sleep(20 * time.Millisecond)
@@ -195,7 +208,7 @@ func TestListenAndServe(t *testing.T) {
 				}
 
 				shutdown := make(chan os.Signal, 1)
-				go func() { gracefulshutdown.ListenAndServe(server, shutdown, context.Background()) }()
+				go gracefulshutdown.ListenAndServe(server, shutdown, context.Background())
 
 				wrongSignal := syscall.SIGIOT
 				for range c.wrongSignalCount {
@@ -224,7 +237,7 @@ func TestListenAndServe(t *testing.T) {
 		shutdown := make(chan os.Signal, 1)
 		type key string
 		ctx := context.WithValue(context.Background(), key("test_key"), 12)
-		go func() { gracefulshutdown.ListenAndServe(server, shutdown, ctx) }()
+		go gracefulshutdown.ListenAndServe(server, shutdown, ctx)
 
 		shutdown <- os.Interrupt
 		time.Sleep(10 * time.Millisecond)
