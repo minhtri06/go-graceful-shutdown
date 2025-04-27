@@ -222,13 +222,14 @@ func TestListenAndServe(t *testing.T) {
 		}
 
 		shutdown := make(chan os.Signal, 1)
-		ctx := context.WithValue(context.Background(), "test_key", 12)
+		type key string
+		ctx := context.WithValue(context.Background(), key("test_key"), 12)
 		go func() { gracefulshutdown.ListenAndServe(server, shutdown, ctx) }()
 
 		shutdown <- os.Interrupt
 		time.Sleep(10 * time.Millisecond)
 
-		gotVal := gotCtx.Value("test_key").(int)
+		gotVal := gotCtx.Value(key("test_key")).(int)
 		assert.Equal(t, gotVal, 12)
 	})
 }
