@@ -38,19 +38,22 @@ func BuildBinary(path, name string) (cleanup func() error, binPath string, err e
 	return cleanup, binPath, nil
 }
 
-func RunBin(binPath string) (interrupt func() error, err error) {
+func RunBin(binPath string) (interrupt func() error, kill func() error, err error) {
 	cmd := exec.Command(binPath)
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("error running bin path due to: %w", err)
+		return nil, nil, fmt.Errorf("error running bin path due to: %w", err)
 	}
 
 	interrupt = func() error {
 		return cmd.Process.Signal(os.Interrupt)
 	}
+	kill = func() error {
+		return cmd.Process.Kill()
+	}
 
-	return interrupt, nil
+	return interrupt, kill, nil
 }
 
 func WaitForServerToListen(port string) error {

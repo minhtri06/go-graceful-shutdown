@@ -18,10 +18,11 @@ func TestListenAndServe(t *testing.T) {
 	}
 	defer cleanup()
 
-	interrupt, err := acceptancetest.RunBin(binPath)
+	interrupt, kill, err := acceptancetest.RunBin(binPath)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer kill()
 	if err := acceptancetest.WaitForServerToListen(port); err != nil {
 		t.Fatal(err)
 	}
