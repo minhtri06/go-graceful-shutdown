@@ -45,7 +45,7 @@ func TestListenAndServe(t *testing.T) {
 	}
 
 	_, err = http.Get(url)
-	if err != nil {
+	if err == nil {
 		t.Error("expect an error but didn't get one")
 	}
 }

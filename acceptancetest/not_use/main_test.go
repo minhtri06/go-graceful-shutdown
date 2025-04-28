@@ -38,7 +38,7 @@ func TestListenAndServe(t *testing.T) {
 
 	select {
 	case err := <-errCh:
-		if err != nil {
+		if err == nil {
 			t.Error("expect an error but didn't get one")
 		}
 	case <-time.After(3 * time.Second):
