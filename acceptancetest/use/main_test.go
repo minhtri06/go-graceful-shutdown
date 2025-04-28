@@ -16,7 +16,7 @@ func TestListenAndServe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { cleanup() })
+	defer cleanup()
 
 	interrupt, err := acceptancetest.RunBin(binPath)
 	if err != nil {
