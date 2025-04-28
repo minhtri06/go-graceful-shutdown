@@ -5,21 +5,24 @@ import (
 	"testing"
 	"time"
 
-	"github.com/minhtri06/go-graceful-shutdown/cmd"
+	"github.com/minhtri06/go-graceful-shutdown/acceptancetest"
+	"github.com/minhtri06/go-graceful-shutdown/assert"
 )
 
 func TestListenAndServe(t *testing.T) {
 	const url = "http://localhost:" + port
-	cleanup, binPath, err := cmd.BuildBinary(".", "no_graceful")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer cleanup()
 
-	interrupt, err := cmd.RunBin(binPath)
+	cleanup, binPath, err := acceptancetest.BuildBinary(".", "graceful")
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() { cleanup() })
+
+	interrupt, err := acceptancetest.RunBin(binPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	acceptancetest.WaitForServerToListen(port)
 
 	_, err = http.Get(url)
 	if err != nil {
@@ -42,10 +45,13 @@ func TestListenAndServe(t *testing.T) {
 
 	select {
 	case err := <-errCh:
-		if err != nil {
-			t.Error("expect an error but didn't get one")
-		}
+		assert.NoError(t, err)
 	case <-time.After(3 * time.Second):
 		t.Errorf("timeout waiting for the request error")
+	}
+
+	_, err = http.Get(url)
+	if err != nil {
+		t.Error("expect an error but didn't get one")
 	}
 }

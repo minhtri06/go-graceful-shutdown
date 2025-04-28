@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/minhtri06/go-graceful-shutdown/cmd"
+	"github.com/minhtri06/go-graceful-shutdown/acceptancetest"
 )
 
 const port = "8000"
@@ -12,7 +12,7 @@ const port = "8000"
 func main() {
 	server := &http.Server{
 		Addr:    ":" + port,
-		Handler: http.HandlerFunc(cmd.SlowHandler),
+		Handler: http.HandlerFunc(acceptancetest.SlowHandler),
 	}
 
 	if err := server.ListenAndServe(); err != nil {

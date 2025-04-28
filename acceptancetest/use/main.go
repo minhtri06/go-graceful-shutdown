@@ -8,7 +8,7 @@ import (
 	"os/signal"
 
 	gracefulshutdown "github.com/minhtri06/go-graceful-shutdown"
-	"github.com/minhtri06/go-graceful-shutdown/cmd"
+	"github.com/minhtri06/go-graceful-shutdown/acceptancetest"
 )
 
 const port = "8000"
@@ -16,7 +16,7 @@ const port = "8000"
 func main() {
 	server := &http.Server{
 		Addr:    ":" + port,
-		Handler: http.HandlerFunc(cmd.SlowHandler),
+		Handler: http.HandlerFunc(acceptancetest.SlowHandler),
 	}
 
 	shutdownCh := make(chan os.Signal, 1)
