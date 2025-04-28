@@ -21,6 +21,11 @@ func TestListenAndServe(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	_, err = http.Get(url)
+	if err != nil {
+		t.Errorf("expect no error, but got %v", err)
+	}
+
 	// Fire up a request, we know it's slow, so without graceful shutdown it would return error
 	errCh := make(chan error, 1)
 	go func() {
