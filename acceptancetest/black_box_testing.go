@@ -1,6 +1,7 @@
 package acceptancetest
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -52,13 +53,14 @@ func RunBin(binPath string) (interrupt func() error, err error) {
 	return interrupt, nil
 }
 
-func WaitForServerToListen(port string) {
+func WaitForServerToListen(port string) error {
 	for range 20 {
 		conn, _ := net.Dial("tcp", net.JoinHostPort("localhost", port))
 		if conn != nil {
 			conn.Close()
-			break
+			return nil
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+	return errors.New("timeout waiting for server to listen")
 }

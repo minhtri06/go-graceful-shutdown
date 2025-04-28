@@ -22,7 +22,9 @@ func TestListenAndServe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	acceptancetest.WaitForServerToListen(port)
+	if err := acceptancetest.WaitForServerToListen(port); err != nil {
+		t.Fatal(err)
+	}
 
 	_, err = http.Get(url)
 	if err != nil {
