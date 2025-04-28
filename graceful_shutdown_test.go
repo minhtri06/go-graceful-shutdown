@@ -15,7 +15,7 @@ import (
 func TestListenAndServe(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Run("if shutdown, should not return error, call ListenAndServe once and Shutdown once", func(t *testing.T) {
-			server := graceshut.NewMockHTTPServer()
+			server := NewMockHTTPServer()
 
 			shutdown := make(chan os.Signal, 1)
 			errCh := make(chan error)
@@ -33,7 +33,7 @@ func TestListenAndServe(t *testing.T) {
 		})
 
 		t.Run("if not shutdown, should call ListenAndServe once and not call Shutdown", func(t *testing.T) {
-			server := graceshut.NewMockHTTPServer()
+			server := NewMockHTTPServer()
 
 			shutdown := make(chan os.Signal)
 			go graceshut.ListenAndServe(server, shutdown, context.Background())
@@ -49,7 +49,7 @@ func TestListenAndServe(t *testing.T) {
 
 	t.Run("if ListenAndServe returns error should propagate it", func(t *testing.T) {
 		listenErr := errors.New("error when listening")
-		server := graceshut.NewMockHTTPServer()
+		server := NewMockHTTPServer()
 		server.ListenFunc = func() error { return listenErr }
 
 		errCh := make(chan error)
@@ -68,7 +68,7 @@ func TestListenAndServe(t *testing.T) {
 
 	t.Run("should propagate Shutdown's error", func(t *testing.T) {
 		shutdownErr := errors.New("error shutting down")
-		server := graceshut.NewMockHTTPServer()
+		server := NewMockHTTPServer()
 		server.ShutdownFunc = func(ctx context.Context) error { return shutdownErr }
 
 		shutdown := make(chan os.Signal, 1)
@@ -103,7 +103,7 @@ func TestListenAndServe(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.signal.String(), func(t *testing.T) {
-				server := graceshut.NewMockHTTPServer()
+				server := NewMockHTTPServer()
 
 				shutdown := make(chan os.Signal, 1)
 				go graceshut.ListenAndServe(server, shutdown, context.Background())
@@ -130,7 +130,7 @@ func TestListenAndServe(t *testing.T) {
 		}
 		for _, c := range cases {
 			t.Run(c.shutdownSignal.String(), func(t *testing.T) {
-				server := graceshut.NewMockHTTPServer()
+				server := NewMockHTTPServer()
 
 				shutdown := make(chan os.Signal, 1)
 				go graceshut.ListenAndServe(server, shutdown, context.Background())
@@ -149,7 +149,7 @@ func TestListenAndServe(t *testing.T) {
 
 	t.Run("should pass the context to the Shutdown function", func(t *testing.T) {
 		ctxChn := make(chan context.Context)
-		server := graceshut.NewMockHTTPServer()
+		server := NewMockHTTPServer()
 		server.ShutdownFunc = func(ctx context.Context) error {
 			ctxChn <- ctx
 			return nil
