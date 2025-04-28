@@ -12,20 +12,11 @@ import (
 func TestListenAndServe(t *testing.T) {
 	const url = "http://localhost:" + port
 
-	cleanup, binPath, err := acceptancetest.BuildBinary(".", "graceful")
+	cleanup, interrupt, err := acceptancetest.RunServer(".", port)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer cleanup()
-
-	interrupt, kill, err := acceptancetest.RunBin(binPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer kill()
-	if err := acceptancetest.WaitForServerToListen(port); err != nil {
-		t.Fatal(err)
-	}
 
 	_, err = http.Get(url)
 	if err != nil {
