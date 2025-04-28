@@ -22,7 +22,7 @@ func ListenAndServe(server HTTPServer, shutdownCh chan os.Signal, shutdownCtx co
 		case err := <-listenErr:
 			return err
 		case signal := <-shutdownCh:
-			if signal != os.Interrupt && signal != os.Kill {
+			if !isShutdownSignal(signal) {
 				break
 			}
 			return server.Shutdown(shutdownCtx)
