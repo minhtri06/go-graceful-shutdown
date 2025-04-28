@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/minhtri06/go-graceful-shutdown/acceptancetest"
+	"github.com/minhtri06/go-graceful-shutdown/assert"
 )
 
 func TestListenAndServe(t *testing.T) {
@@ -38,9 +39,7 @@ func TestListenAndServe(t *testing.T) {
 
 	select {
 	case err := <-errCh:
-		if err == nil {
-			t.Error("expect an error but didn't get one")
-		}
+		assert.AnyError(t, err)
 	case <-time.After(3 * time.Second):
 		t.Errorf("timeout waiting for the request error")
 	}

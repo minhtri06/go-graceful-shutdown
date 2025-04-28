@@ -44,8 +44,7 @@ func TestListenAndServe(t *testing.T) {
 		t.Errorf("timeout waiting for the request error")
 	}
 
+	// Any request comes after the server shutdown would fail
 	_, err = http.Get(url)
-	if err == nil {
-		t.Error("expect an error but didn't get one")
-	}
+	assert.AnyError(t, err)
 }

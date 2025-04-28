@@ -19,6 +19,13 @@ func NoError(t testing.TB, err error) {
 	}
 }
 
+func AnyError(t testing.TB, err error) {
+	t.Helper()
+	if err == nil {
+		t.Errorf("expect an error but didn't get one")
+	}
+}
+
 func Error(t testing.TB, got, expect error) {
 	t.Helper()
 	if !errors.Is(got, expect) {
