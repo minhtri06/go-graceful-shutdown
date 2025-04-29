@@ -7,16 +7,16 @@ import (
 	"syscall"
 )
 
-// SignalsToListenTo is a list of signals from OS that this package listen to shutdown
-var SignalsToListenTo = []os.Signal{os.Interrupt, os.Kill, syscall.SIGTERM}
+// signalsToListenTo is a list of signals from OS that this package listen to shutdown
+var signalsToListenTo = []os.Signal{os.Interrupt, os.Kill, syscall.SIGTERM}
 
 func isShutdownSignal(signal os.Signal) bool {
-	return slices.Contains(SignalsToListenTo, signal)
+	return slices.Contains(signalsToListenTo, signal)
 }
 
-// NewShutdownChannel return a shutdown channel which will be notified on any signal of SignalsToListenTo
-func NewShutdownChannel() chan os.Signal {
+// newShutdownChannel return a shutdown channel which will be notified on any signal of SignalsToListenTo
+func newShutdownChannel() chan os.Signal {
 	shutdownCh := make(chan os.Signal, 1)
-	signal.Notify(shutdownCh, SignalsToListenTo...)
+	signal.Notify(shutdownCh, signalsToListenTo...)
 	return shutdownCh
 }

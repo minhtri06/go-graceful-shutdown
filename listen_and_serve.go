@@ -16,7 +16,7 @@ type HTTPServer interface {
 // a interrupt or kill signal from the OS.
 // When shutting down, server.Shutdown method will be called with the context timeout of shutdownTimeout
 func ListenAndServe(server HTTPServer, shutdownTimeout *time.Duration) error {
-	return listenAndServe(server, NewShutdownChannel(), shutdownTimeout)
+	return listenAndServe(server, newShutdownChannel(), shutdownTimeout)
 }
 
 func listenAndServe(server HTTPServer, shutdownCh chan os.Signal, shutdownTimeout *time.Duration) error {
