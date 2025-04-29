@@ -14,7 +14,8 @@ type HTTPServer interface {
 
 // ListenAndServe will call server.ListenAndServe method and perform graceful shutdown when notified
 // a interrupt or kill signal from the OS.
-// When shutting down, server.Shutdown method will be called with the context timeout of shutdownTimeout
+// When shutting down, server.Shutdown method will be called with the context timeout of shutdownTimeout.
+// If shutdownTimeout = nil, there's no timeout.
 func ListenAndServe(server HTTPServer, shutdownTimeout *time.Duration) error {
 	return listenAndServe(server, newShutdownChannel(), shutdownTimeout)
 }

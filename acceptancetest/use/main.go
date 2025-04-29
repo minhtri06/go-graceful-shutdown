@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
-	"os/signal"
+	"time"
 
 	gracefulshutdown "github.com/minhtri06/go-graceful-shutdown"
 	"github.com/minhtri06/go-graceful-shutdown/acceptancetest"
@@ -18,10 +17,8 @@ func main() {
 		Handler: http.HandlerFunc(acceptancetest.SlowHandler),
 	}
 
-	shutdownCh := make(chan os.Signal, 1)
-	signal.Notify(shutdownCh, os.Interrupt)
-
-	if err := gracefulshutdown.ListenAndServe(server, nil); err != nil {
+	shutdownTimeout := 30 * time.Second
+	if err := gracefulshutdown.ListenAndServe(server, &shutdownTimeout); err != nil {
 		fmt.Printf("error when listening: %v", err)
 	}
 
