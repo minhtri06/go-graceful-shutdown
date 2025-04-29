@@ -12,14 +12,13 @@ type HTTPServer interface {
 	Shutdown(context.Context) error
 }
 
+// ListenAndServe will call server.ListenAndServe method and perform graceful shutdown when notified
+// a interrupt or kill signal from the OS.
+// When shutting down, server.Shutdown method will be called with the context timeout of shutdownTimeout
 func ListenAndServe(server HTTPServer, shutdownTimeout *time.Duration) error {
 	return listenAndServe(server, NewShutdownChannel(), shutdownTimeout)
 }
 
-// listenAndServe will call server.listenAndServe method, and perform graceful shutdown when shutdownCh
-// receives a interrupt/kill signal.
-// A specific list of signal that shutdownCh would care is defined in [SignalsToListenTo].
-// When shutting down, server.Shutdown method will be called with the context of shutdownTimeout timeout
 func listenAndServe(server HTTPServer, shutdownCh chan os.Signal, shutdownTimeout *time.Duration) error {
 	listenErr := make(chan error)
 	go func() {
