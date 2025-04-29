@@ -32,12 +32,13 @@ func TestListenAndServe(t *testing.T) {
 			}
 		})
 
-		t.Run("if not shutdown, should call ListenAndServe once and not call Shutdown", func(t *testing.T) {
+		t.Run("if not shutdown, should call ListenAndServe once and do not call Shutdown", func(t *testing.T) {
 			server := NewMockHTTPServer()
 
 			shutdown := make(chan os.Signal)
 			go graceshut.ListenAndServe(server, shutdown, nil)
 
+			time.Sleep(100 * time.Millisecond) // wait sometime
 			server.AssertListenCalled(t)
 			server.AssertShutdownNotCalled(t)
 
@@ -148,15 +149,14 @@ func TestListenAndServe(t *testing.T) {
 		}
 	})
 
-	t.Run("obey the timeout in the context", func(t *testing.T) {
+	t.Run("should timeout if the Shutdown method takes too long to complete", func(t *testing.T) {
 		server := NewMockHTTPServer()
-		timeout := 40 * time.Millisecond
+		timeout := 20 * time.Millisecond
 		server.ShutdownFunc = func(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
-				// If it goes here, the timeout is less than 20 ms
-				t.Errorf("expect to ctx timeout more than 20 ms")
-			case <-time.After(20 * time.Millisecond):
+			case <-time.After(22 * time.Millisecond):
+				t.Errorf("expect to timeout")
 			}
 			return nil
 		}
@@ -165,12 +165,36 @@ func TestListenAndServe(t *testing.T) {
 		endCh := make(chan error, 1)
 		go func() { endCh <- graceshut.ListenAndServe(server, shutdown, &timeout) }()
 
-		time.Sleep(40 * time.Millisecond)
 		shutdown <- os.Interrupt
 
 		select {
 		case <-endCh:
-		case <-time.After(3000 * time.Millisecond):
+		case <-time.After(500 * time.Millisecond):
+			t.Errorf("timeout waiting for context")
+		}
+	})
+
+	t.Run("should not timeout if Shutdown complete earlier timeout", func(t *testing.T) {
+		server := NewMockHTTPServer()
+		timeout := 20 * time.Millisecond
+		server.ShutdownFunc = func(ctx context.Context) error {
+			select {
+			case <-ctx.Done():
+				t.Errorf("didn't expect to timeout")
+			case <-time.After(15 * time.Millisecond):
+			}
+			return nil
+		}
+
+		shutdown := make(chan os.Signal, 1)
+		endCh := make(chan error, 1)
+		go func() { endCh <- graceshut.ListenAndServe(server, shutdown, &timeout) }()
+
+		shutdown <- os.Interrupt
+
+		select {
+		case <-endCh:
+		case <-time.After(500 * time.Millisecond):
 			t.Errorf("timeout waiting for context")
 		}
 	})
