@@ -3,6 +3,7 @@ package gracefulshutdown
 import (
 	"context"
 	"os"
+	"time"
 )
 
 // HTTPServer is an abstraction for something that listen for connection and do HTTP works.
@@ -12,9 +13,9 @@ type HTTPServer interface {
 }
 
 // ListenAndServe will call server.ListenAndServe method, and perform graceful shutdown when
-// a signal that included in [SignalsToListenTo] sent to shutdownCh channel.
-// When shutting down, server.Shutdown method is called with shutdownCtx as its argument.
-func ListenAndServe(server HTTPServer, shutdownCh chan os.Signal, shutdownCtx context.Context) error {
+// an interrupt or kill signal sent to shutdownCh.
+// shutdownTimeout is the timeout for shutting down, if it's nil then there's no timeout.
+func ListenAndServe(server HTTPServer, shutdownCh chan os.Signal, shutdownTimeout *time.Duration) error {
 	listenErr := make(chan error)
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
@@ -27,7 +28,13 @@ func ListenAndServe(server HTTPServer, shutdownCh chan os.Signal, shutdownCtx co
 			return err
 		case signal := <-shutdownCh:
 			if isShutdownSignal(signal) {
-				return server.Shutdown(shutdownCtx)
+				ctx := context.Background()
+				if shutdownTimeout != nil {
+					var cancel context.CancelFunc
+					ctx, cancel = context.WithTimeout(context.Background(), *shutdownTimeout)
+					defer cancel()
+				}
+				return server.Shutdown(ctx)
 			}
 		}
 	}

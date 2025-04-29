@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -22,7 +21,7 @@ func main() {
 	shutdownCh := make(chan os.Signal, 1)
 	signal.Notify(shutdownCh, os.Interrupt)
 
-	if err := gracefulshutdown.ListenAndServe(server, shutdownCh, context.Background()); err != nil {
+	if err := gracefulshutdown.ListenAndServe(server, shutdownCh, nil); err != nil {
 		fmt.Printf("error when listening: %v", err)
 	}
 
