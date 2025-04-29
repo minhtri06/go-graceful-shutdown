@@ -27,15 +27,16 @@ func ListenAndServe(server HTTPServer, shutdownCh chan os.Signal, shutdownTimeou
 		case err := <-listenErr:
 			return err
 		case signal := <-shutdownCh:
-			if isShutdownSignal(signal) {
-				ctx := context.Background()
-				if shutdownTimeout != nil {
-					var cancel context.CancelFunc
-					ctx, cancel = context.WithTimeout(context.Background(), *shutdownTimeout)
-					defer cancel()
-				}
-				return server.Shutdown(ctx)
+			if !isShutdownSignal(signal) {
+				continue
 			}
+			ctx := context.Background()
+			if shutdownTimeout != nil {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(context.Background(), *shutdownTimeout)
+				defer cancel()
+			}
+			return server.Shutdown(ctx)
 		}
 	}
 }
