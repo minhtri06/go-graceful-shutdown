@@ -86,13 +86,14 @@ func TestListenAndServe(t *testing.T) {
 		}
 	})
 
-	t.Run("should only shutdown when the signal is os.Interrupt, os.Kill, syscall.SIGINT or syscall.SIGKILL", func(t *testing.T) {
+	t.Run("should only shutdown when receive related signals", func(t *testing.T) {
 		cases := []struct {
 			signal         os.Signal
 			shutdownCalled bool
 		}{
 			{syscall.SIGINT, true},
 			{syscall.SIGKILL, true},
+			{syscall.SIGTERM, true},
 			{os.Interrupt, true},
 			{os.Kill, true},
 			{syscall.SIGABRT, false},
