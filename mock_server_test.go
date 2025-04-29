@@ -1,4 +1,4 @@
-package gracefulshutdown_test
+package gracefulshutdown
 
 import (
 	"context"

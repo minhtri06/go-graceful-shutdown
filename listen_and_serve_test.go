@@ -1,4 +1,4 @@
-package gracefulshutdown_test
+package gracefulshutdown
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	graceshut "github.com/minhtri06/go-graceful-shutdown"
 	"github.com/minhtri06/go-graceful-shutdown/assert"
 )
 
@@ -19,7 +18,7 @@ func TestListenAndServe(t *testing.T) {
 
 			shutdown := make(chan os.Signal, 1)
 			errCh := make(chan error)
-			go func() { errCh <- graceshut.ListenAndServe(server, shutdown, nil) }()
+			go func() { errCh <- listenAndServe(server, shutdown, nil) }()
 
 			shutdown <- os.Interrupt
 			select {
@@ -36,7 +35,7 @@ func TestListenAndServe(t *testing.T) {
 			server := NewMockHTTPServer()
 
 			shutdown := make(chan os.Signal)
-			go graceshut.ListenAndServe(server, shutdown, nil)
+			go listenAndServe(server, shutdown, nil)
 
 			time.Sleep(100 * time.Millisecond) // wait sometime
 			server.AssertListenCalled(t)
@@ -55,7 +54,7 @@ func TestListenAndServe(t *testing.T) {
 
 		errCh := make(chan error)
 		shutdown := make(chan os.Signal, 1)
-		go func() { errCh <- graceshut.ListenAndServe(server, shutdown, nil) }()
+		go func() { errCh <- listenAndServe(server, shutdown, nil) }()
 
 		select {
 		case err := <-errCh:
@@ -74,7 +73,7 @@ func TestListenAndServe(t *testing.T) {
 
 		shutdown := make(chan os.Signal, 1)
 		errCh := make(chan error)
-		go func() { errCh <- graceshut.ListenAndServe(server, shutdown, nil) }()
+		go func() { errCh <- listenAndServe(server, shutdown, nil) }()
 
 		shutdown <- os.Interrupt
 		select {
@@ -108,7 +107,7 @@ func TestListenAndServe(t *testing.T) {
 				server := NewMockHTTPServer()
 
 				shutdown := make(chan os.Signal, 1)
-				go graceshut.ListenAndServe(server, shutdown, nil)
+				go listenAndServe(server, shutdown, nil)
 
 				shutdown <- c.signal
 				if c.shutdownCalled {
@@ -135,7 +134,7 @@ func TestListenAndServe(t *testing.T) {
 				server := NewMockHTTPServer()
 
 				shutdown := make(chan os.Signal, 1)
-				go graceshut.ListenAndServe(server, shutdown, nil)
+				go listenAndServe(server, shutdown, nil)
 
 				wrongSignal := syscall.SIGIOT
 				for range c.wrongSignalCount {
@@ -163,7 +162,7 @@ func TestListenAndServe(t *testing.T) {
 
 		shutdown := make(chan os.Signal, 1)
 		endCh := make(chan error, 1)
-		go func() { endCh <- graceshut.ListenAndServe(server, shutdown, &timeout) }()
+		go func() { endCh <- listenAndServe(server, shutdown, &timeout) }()
 
 		shutdown <- os.Interrupt
 
@@ -188,7 +187,7 @@ func TestListenAndServe(t *testing.T) {
 
 		shutdown := make(chan os.Signal, 1)
 		endCh := make(chan error, 1)
-		go func() { endCh <- graceshut.ListenAndServe(server, shutdown, &timeout) }()
+		go func() { endCh <- listenAndServe(server, shutdown, &timeout) }()
 
 		shutdown <- os.Interrupt
 
