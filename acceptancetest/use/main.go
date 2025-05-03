@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	gracefulshutdown "github.com/minhtri06/go-graceful-shutdown"
-	"github.com/minhtri06/go-graceful-shutdown/acceptancetest"
+	gracefulshutdown "github.com/minhtri06/graceful-shutdown"
+	"github.com/minhtri06/graceful-shutdown/acceptancetest"
 )
 
 const port = "8000"

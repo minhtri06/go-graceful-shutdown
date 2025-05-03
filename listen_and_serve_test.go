@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/minhtri06/go-graceful-shutdown/assert"
+	"github.com/minhtri06/graceful-shutdown/assert"
 )
 
 func TestListenAndServe(t *testing.T) {

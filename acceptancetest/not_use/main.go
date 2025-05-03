@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/minhtri06/go-graceful-shutdown/acceptancetest"
+	"github.com/minhtri06/graceful-shutdown/acceptancetest"
 )
 
 const port = "8000"
