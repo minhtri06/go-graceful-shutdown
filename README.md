@@ -11,8 +11,11 @@ Instead of calling `Shutdown` and handle it yourself, you can pass the HTTP serv
 ```go
 func main() {
     server := &http.Server{
-        Addr:    ":8000",
-        Handler: http.HandlerFunc(acceptancetest.SlowHandler),
+        Addr: ":8000",
+        Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            time.Sleep(5 * time.Second)
+            w.Write([]byte("You know, I am very slowww..."))
+        }),
     }
 
     shutdownTimeout := 30 * time.Second
