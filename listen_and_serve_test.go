@@ -97,9 +97,7 @@ func TestListenAndServe(t *testing.T) {
 			{os.Interrupt, true},
 			{os.Kill, true},
 			{syscall.SIGABRT, false},
-			{syscall.SIGINFO, false},
 			{syscall.SIGILL, false},
-			{syscall.SIGIOT, false},
 		}
 
 		for _, c := range cases {
@@ -136,7 +134,7 @@ func TestListenAndServe(t *testing.T) {
 				shutdown := make(chan os.Signal, 1)
 				go listenAndServe(server, shutdown, nil)
 
-				wrongSignal := syscall.SIGIOT
+				wrongSignal := syscall.SIGILL
 				for range c.wrongSignalCount {
 					shutdown <- wrongSignal
 					server.AssertShutdownNotCalled(t)
